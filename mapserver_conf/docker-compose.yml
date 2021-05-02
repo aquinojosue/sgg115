@@ -1,0 +1,24 @@
+version: '3.1'
+
+services:
+
+  sgg-db:
+    image: postgis/postgis
+    environment:
+      POSTGRES_PASSWORD: admin
+    ports:
+      - 5433:5432
+  sgg-geoserver:
+    ports:
+      - 8081:80
+    image: camptocamp/mapserver
+    #environment:
+    #  - USE_CORS=1
+    volumes:
+      - ${PWD}/mapa.map:/etc/mapserver/mapserver.map:ro
+      - /home/jaquino/Documents/shapefiles:/etc/mapserver/shapefiles:ro
+  sgg_adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 6969:8080

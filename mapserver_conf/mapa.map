@@ -1,0 +1,138 @@
+MAP
+  NAME "WFS_server"
+  STATUS ON
+  SIZE 400 300
+  #SYMBOLSET "../etc/symbols.txt"
+  EXTENT -90.13330078125 13.15467357635498 -87.6905746459961 14.450421333312988
+  UNITS DD
+  SHAPEPATH "/etc/mapserver/shapefiles"
+  IMAGECOLOR 255 255 255
+  #FONTSET "../etc/fonts.txt"
+
+  OUTPUTFORMAT
+    NAME "application/json"
+    DRIVER "OGR/GEOJSON"
+    MIMETYPE "application/json"
+    FORMATOPTION "FORM=SIMPLE"
+    FORMATOPTION "STORAGE=stream"
+  END
+  
+
+  OUTPUTFORMAT
+    NAME "geojson"
+    DRIVER "OGR/GEOJSON"
+    MIMETYPE "application/json; subtype=geojson"
+    FORMATOPTION "STORAGE=stream"
+    FORMATOPTION "FORM=SIMPLE"
+  END
+
+  WEB
+    IMAGEPATH "/ms4w/tmp/ms_tmp/"
+    IMAGEURL "/ms_tmp/"
+    METADATA
+      "wfs_title"          "SGG-115 Server" ## REQUIRED
+      "wfs_onlineresource" "http://centos.local:8081/?" ## Recommended
+      "wfs_srs"            "EPSG:4326 EPSG:4269 EPSG:3978 EPSG:3857" ## Recommended
+      
+      "wfs_abstract"       "Servicio realizado para carga de capas mediante MapServer." ## Recommended
+      "wfs_getfeature_formatlist" "application/json, geojson"
+      "wfs_enable_request" "*"  # necessary
+      "ows_enable_request" "*"
+      "wms_enable_request" "*"
+
+    END
+  END
+
+  PROJECTION
+    "init=epsg:4326"
+  END
+
+  #Empiezan las capas, empezando por la de departamentos
+  LAYER 
+    CONNECTIONTYPE postgis 
+    NAME "departamentos"
+    METADATA
+      "wfs_title"         "Departamentos de El Salvador" ##REQUIRED
+      "wfs_srs"           "EPSG:4326" ## REQUIRED
+      "gml_include_items" "all" ## Optional (serves all attributes for layer)
+      "gml_featureid"     "ID" ## REQUIRED
+      "wfs_enable_request" "*"
+      "ows_enable_request" "*"
+      "wms_enable_request" "*"
+    END
+    #Aqui se define el tipo de geometria se va a utilizar.
+    TYPE POLYGON
+    STATUS ON
+    # Connect to a remote spatial database
+    CONNECTION "user=postgres password=admin dbname=postgres host=sgg-db port=5432"
+    PROCESSING "CLOSE_CONNECTION=DEFER"
+    # Get the lines from the 'geom' column of the 'roads' table 
+    DATA "geom from departamentos" 
+    PROJECTION
+      "init=epsg:4326"
+    END 
+    CLASS
+      NAME "departamentos"
+      STYLE
+        BACKGROUNDCOLOR 0 0 0
+        COLOR 255 128 128
+        OUTLINECOLOR 96 96 96
+      END
+    END
+  END
+
+  #Ejemplo agregando una capa WFS desde un shapefile
+  LAYER
+    NAME "Gimnasios"
+    CONNECTIONTYPE postgis 
+    METADATA
+      "wfs_title"         "Gimasios de El Salvador" ##REQUIRED
+      "wfs_srs"           "EPSG:4326" ## REQUIRED
+      "gml_include_items" "all" ## Optional (serves all attributes for layer)
+      "gml_featureid"     "ID" ## REQUIRED
+      "wfs_enable_request" "*"
+      "ows_enable_request" "*"
+      "wms_enable_request" "*"
+    END
+    STATUS ON
+    TYPE POINT
+    CONNECTION "user=postgres password=admin dbname=postgres host=sgg-db port=5432"
+    PROCESSING "CLOSE_CONNECTION=DEFER"
+    DATA "geom from gimnasios_script" 
+    CLASS
+      STYLE
+        COLOR 246 241 223
+        OUTLINECOLOR 255 255 0
+      END
+    END
+  END
+
+  ##Layer de fallecidos, al parecer solo sirve en WMS
+  LAYER
+    NAME "departamentos_fallecidos"
+    CONNECTIONTYPE postgis 
+    METADATA
+      "wfs_title"         "fallecidos por departamento EL Salvador" ##REQUIRED
+      "wfs_srs"           "EPSG:4326" ## REQUIRED
+      "gml_include_items" "all" ## Optional (serves all attributes for layer)
+      "gml_featureid"     "ID" ## REQUIRED
+      "wfs_getfeature_formatlist" "geojson,application/json"
+      "wfs_enable_request" "*"
+      "ows_enable_request" "*"
+      "wms_enable_request" "*"
+    END
+    STATUS ON
+    TYPE POLYGON
+    CONNECTION "user=postgres password=admin dbname=postgres host=sgg-db port=5432"
+    PROCESSING "CLOSE_CONNECTION=DEFER"
+    DATA "geom from departamentos" 
+    CLASS
+      STYLE
+        COLORRANGE 255 255 0 0 0 0 # black to yellow
+        DATARANGE 0.0 100.0
+        RANGEITEM "HOMICIDIOS"
+      END
+    END
+  END
+
+END #mapfile
