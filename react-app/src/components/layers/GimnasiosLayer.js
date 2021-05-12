@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { FeatureGroup, GeoJSON, Popup, Marker } from "react-leaflet";
 import L from "leaflet";
 import iconBaseball from '../../img/baseball-marker.png'
-export default function GimnasiosLayer(){
+export default function GimnasiosLayer(props){
     //Instanciamos el state de gimnasios
     const [gimnasios, setGimnasios] = useState(null);
 
@@ -38,11 +38,16 @@ export default function GimnasiosLayer(){
                         key={id_gimnasio}
                         icon={baseballIcon}
                         position={[gimnasio.geometry.coordinates[1],gimnasio.geometry.coordinates[0]]}
+                        eventHandlers={{
+                            click: () => {
+                                props.setRoute(gimnasio.geometry.coordinates,gimnasio.properties.nombre_gym)
+                            },
+                          }}
                     />
                     <Popup>
                         <b>{gimnasio.properties.nombre_gym}</b><br/>
                         <b>Teléfono:</b> {gimnasio.properties.telefono_gym}<br/>
-                        <a>Instrucciones para llegar</a>
+                        <button >Aseme clis</button>
                     </Popup>
                 </FeatureGroup>
                 )
