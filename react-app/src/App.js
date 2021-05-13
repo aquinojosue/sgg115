@@ -40,12 +40,13 @@ export default function App() {
     axios
     .post(
       'https://api.openrouteservice.org/v2/directions/driving-car/geojson',{
-        "coordinates":[destino,[location.coords.longitude,location.coords.latitude]]
+        "coordinates":[[location.coords.longitude,location.coords.latitude],destino]
       }, options)
       .then(response=>{
-        if (route && route.geojson && routeRef) routeRef.current.clearLayers()
         var ruta = response.data
-        setRoute({"name":name,"geojson":ruta})
+        if (route && route.geojson && routeRef && route.destineCoords != destino) routeRef.current.clearLayers()
+        
+        setRoute({"name":name,"geojson":ruta, "destineCoords":destino})
       })
   }
   useEffect(()=>{
