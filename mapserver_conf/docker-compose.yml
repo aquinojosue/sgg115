@@ -11,12 +11,12 @@ services:
   sgg-geoserver:
     ports:
       - 8081:80
-    image: camptocamp/mapserver
-    #environment:
-    #  - USE_CORS=1
-    volumes:
-      - ${PWD}/mapa.map:/etc/mapserver/mapserver.map:ro
-      - /home/jaquino/Documents/shapefiles:/etc/mapserver/shapefiles:ro
+    image: meggsimum/geoserver
+    environment:
+      - USE_CORS=1
+    #volumes:
+    #  - ${PWD}/mapa.map:/etc/mapserver/mapserver.map:ro
+    #  - /home/jaquino/Documents/shapefiles:/etc/mapserver/shapefiles:ro
   sgg_adminer:
     image: adminer
     restart: always
