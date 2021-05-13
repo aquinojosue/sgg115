@@ -3,6 +3,7 @@ import { useEffect, useState, useRef } from "react";
 import { MapContainer, TileLayer, LayersControl, LayerGroup } from "react-leaflet";
 import DepartamentosHomicidiosLayer from "./components/layers/DepartamentosHomicidiosLayer";
 import GimnasiosLayer from "./components/layers/GimnasiosLayer";
+import NatacionLayer from './components/layers/NatacionLayer'
 import MunicipiosCrimenesLayer from "./components/layers/MunicipiosCrimenesLayer";
 import Header from './components/Header'
 import "./styles.css";
@@ -81,9 +82,14 @@ export default function App() {
                 <Overlay name="Gimnasios">
                   <GimnasiosLayer setRoute={setRouteORS}/>
                 </Overlay>
-                <Overlay name="Municipios con crimenes">
-                  <MunicipiosCrimenesLayer />
+                <Overlay name="Natacion">
+                  <NatacionLayer setRoute={setRouteORS}/>
                 </Overlay>
+                {
+                  /**<Overlay name="Municipios con crimenes">
+                  <MunicipiosCrimenesLayer />
+                </Overlay> */
+                }
                 {
                   !location.default ?  
                   <Overlay checked name="Posicion actual">

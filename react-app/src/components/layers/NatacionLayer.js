@@ -2,10 +2,10 @@ import axios from 'axios';
 import React, { useEffect, useState } from 'react';
 import { FeatureGroup, GeoJSON, Popup, Marker } from "react-leaflet";
 import L from "leaflet";
-import iconBaseball from '../../img/baseball-marker.png'
-export default function GimnasiosLayer(props){
+import iconBaseball from '../../img/club_natacion.svg'
+export default function NatacionLayer(props){
     //Instanciamos el state de gimnasios
-    const [gimnasios, setGimnasios] = useState(null);
+    const [clubes, setClubes] = useState(null);
 
     var baseballIcon = L.icon({
 		iconUrl: iconBaseball,
@@ -13,40 +13,41 @@ export default function GimnasiosLayer(props){
 		iconAnchor: [16, 37],
 		popupAnchor: [0, -28]
 	});
-    
+    const apiUrl = 'http://192.168.1.13:8081/geoserver/sgg_grupo08/ows?service=WFS&version=1.0.0&request=GetFeature&outputFormat=application%2Fjson&typeName='
     useEffect(()=>{
         //Traemos los datos del servidor mapserver
         axios
-            .get(process.env.REACT_APP_WFS_LAYER_URL + "gimnasios")
+            .get(apiUrl + "clubes_natacion_sv")
             //Y despues los guardamos en el state de gimnasios
-            .then((response)=>setGimnasios(response.data))
+            .then((response)=>setClubes(response.data))
     },[])
 
     return(
         <FeatureGroup>
         {
             //Si se encontraron gimnasios, o al menos ya cargaron, continuamos.
-            gimnasios?
+            clubes?
             //Iteramos en todos los gimnasios
-            gimnasios.features.map((gimnasio, index)=>{
-                var id_gimnasio = "gimnasio_"+index
+            clubes.features.map((club, index)=>{
+                var id_club = "gimnasio_"+index
                 return(
                 <FeatureGroup>
                     {/**<GeoJSON id={id_gimnasio} key={id_gimnasio} data={gimnasio}/> */}
                     <Marker 
-                        id={id_gimnasio}
-                        key={id_gimnasio}
+                        id={club}
+                        key={club}
                         icon={baseballIcon}
-                        position={[gimnasio.geometry.coordinates[1],gimnasio.geometry.coordinates[0]]}
+                        position={[club.geometry.coordinates[1],club.geometry.coordinates[0]]}
                         eventHandlers={{
                             click: () => {
-                                props.setRoute(gimnasio.geometry.coordinates,gimnasio.properties.nombre_gym)
+                                props.setRoute(club.geometry.coordinates,club.properties.nombre_natacion)
                             },
                           }}
                     />
                     <Popup>
-                        <b>{gimnasio.properties.nombre_gym}</b><br/>
-                        <b>Teléfono:</b> {gimnasio.properties.telefono_gym}<br/>
+                        <b>{club.properties.nombre_natacion}</b><br/>
+                        <b>Departamento: </b>{club.properties.depto} <br/>
+                        <b>Teléfono:</b> {club.properties.telefono_natacion}<br/>
                     </Popup>
                 </FeatureGroup>
                 )
