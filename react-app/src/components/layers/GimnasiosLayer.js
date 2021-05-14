@@ -17,7 +17,7 @@ export default function GimnasiosLayer(props){
     useEffect(()=>{
         //Traemos los datos del servidor mapserver
         axios
-            .get(process.env.REACT_APP_WFS_LAYER_URL + "gimnasios")
+            .get(process.env.REACT_APP_WFS_GEO_URL + "sgg_grupo08:gimnasios_sv")
             //Y despues los guardamos en el state de gimnasios
             .then((response)=>setGimnasios(response.data))
     },[])

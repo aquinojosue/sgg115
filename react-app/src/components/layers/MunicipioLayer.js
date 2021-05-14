@@ -1,11 +1,14 @@
 import axios from "axios";
 import { FeatureGroup, GeoJSON, Popup } from "react-leaflet";
 import React, { useEffect, useState } from "react";
-import {onlyUnique, estiloMunicipios} from '../styles';
+import {onlyUnique, getStyle} from '../styles';
+import classyBrew from 'classybrew'
 
-export default function(){
+export default function(props){
     //Creamos el state de departamentos, para que lo podamos usar en toda la app.
     const [municipios, setMunicipios] = useState(null);
+    const [brew, setBrew] = useState(null)
+    
 
     //En este caso, useEffect se correrá solamente cuando se cargue por primera vez el componente
     // es decir, el siguiente paso se hará solo una vez.
@@ -14,10 +17,8 @@ export default function(){
         axios
             .get(process.env.REACT_APP_WFS_GEO_URL +"sgg_grupo08:municipios")
             .then((response)=>{
-                const valoresATomar = [
-                    "EXTORSION","HOMICIDIO","FALLECIDOS_ACC_TTO",
-                    "HURTO","LESIONES","HURTO_ROBO_VEHICULOS","ROBO_DE_VEHICULOS",
-                    "SECUESTRO","VIOLACION"
+                const valoresATomar = props.crimen ? [props.crimen]:[
+                    "HOMICIDIO","FALLECIDOS_ACC_TTO","HURTO","SECUESTRO","VIOLACION"
                 ]
                 const municipiosOriginal = {...response.data}
                 const nuevosFeatures = response.data.features.map(feature=>{
@@ -31,15 +32,35 @@ export default function(){
                 })
                 municipiosOriginal.features = nuevosFeatures
                 setMunicipios(municipiosOriginal)
+                
+                //Realizamos las sumas
+                const sumas = 
+                    municipiosOriginal.features
+                    .map(feature => feature.properties.cat)
+                    .filter(onlyUnique)
+                    .map((featureID)=>{
+                        return municipiosOriginal.features
+                            .filter(feature => feature.properties.cat === featureID)[0]
+                            .properties.SUMATORIA_CRIMENES
+                    })
+
+                var brewMunis = new classyBrew();
+                brewMunis.setSeries(sumas)
+                brewMunis.setNumClasses(6)
+                brewMunis.setColorCode(props.colorRange? props.colorRange:'PuBu')
+                brewMunis.classify('quantile');
+                setBrew(brewMunis)
             }) //Una vez encontrado los datos, en formato GeoJSON
             //Lo mandamos a nuestro state.
         
     },[])
+
+
     //Lo que devolverá este componente será un FeatureGroup, que incluye (por el momento) un Popup y el poligono.
     return(
         <FeatureGroup>
         {
-          municipios ? //Si los municipios no están vacios, es decir, no es nulo, sigamos.
+          municipios && brew ? //Si los municipios no están vacios, es decir, no es nulo, sigamos.
           municipios
             .features.map(feature => feature.properties.cat) //Primeramente, nos dirigiremos a "features" que es la variable o
                                                             // array donde se encuentran los poligonos y sus datos
@@ -57,20 +78,22 @@ export default function(){
                     .filter(feature => feature.properties.cat === featureID)    //correspondientes al departamento que se esta iterando.
                 
                 //Traemos la informacion del departamento, en este caso podemos usar el primer elemento.
-                var municipio = featuresMuni[0]         
+                var municipio = featuresMuni[0]  
+                
+                console.log(brew.getColorInRange(municipio.SUMATORIA_CRIMENES))
                 
                 return ( //Devolvemos el resultado de nuestro componente, es decir, el poligono y el Popup
                 <FeatureGroup>
-                    <GeoJSON key={index} id={index} data={featuresMuni} style={estiloMunicipios}
+                    <GeoJSON key={index} id={index} data={featuresMuni} style={getStyle(brew.getColorInRange(municipio.properties.SUMATORIA_CRIMENES))}
                         eventHandlers={{
                             click: () => {
-                                console.log("Municipio clic: ",municipio.properties.MUNICIPIO)
+                                console.log("Municipio clic: ",municipio.properties.NOM_MUN)
                             },
                           }}
                     />
                     <Popup>
-                        <strong>Municipio:</strong> {municipio.properties.MUNICIPIO}<br /> 
-                        <strong>Crimenes:</strong> {municipio.properties.SUMATORIA_CRIMENES}
+                        <strong>Municipio:</strong> {municipio.properties.NOM_MUN}<br /> 
+                        <strong>{props.title? props.title:"Crimenes"}:</strong> {municipio.properties.SUMATORIA_CRIMENES}
                     </Popup>
                 </FeatureGroup>
                 )

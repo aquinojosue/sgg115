@@ -13,11 +13,10 @@ export default function NatacionLayer(props){
 		iconAnchor: [16, 37],
 		popupAnchor: [0, -28]
 	});
-    const apiUrl = 'http://192.168.1.13:8081/geoserver/sgg_grupo08/ows?service=WFS&version=1.0.0&request=GetFeature&outputFormat=application%2Fjson&typeName='
     useEffect(()=>{
         //Traemos los datos del servidor mapserver
         axios
-            .get(apiUrl + "clubes_natacion_sv")
+            .get(process.env.REACT_APP_WFS_GEO_URL + "sgg_grupo08:clubes_natacion_sv")
             //Y despues los guardamos en el state de gimnasios
             .then((response)=>setClubes(response.data))
     },[])

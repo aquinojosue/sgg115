@@ -1,19 +1,54 @@
 import axios from "axios";
 import { FeatureGroup, GeoJSON, Popup } from "react-leaflet";
 import React, { useEffect, useState } from "react";
-import {onlyUnique, estiloHomicidios} from '../styles';
+import {onlyUnique, getStyle} from '../styles';
+import classyBrew from 'classybrew'
 
-export default function(){
+export default function(props){
     //Creamos el state de departamentos, para que lo podamos usar en toda la app.
     const [departamentos, setDepartamentos] = useState(null);
+    const [brew, setBrew] = useState(null)
 
     //En este caso, useEffect se correrá solamente cuando se cargue por primera vez el componente
     // es decir, el siguiente paso se hará solo una vez.
     useEffect(()=>{
         //Utilizamos axios para hacer un request a MapServer
         axios
-            .get(process.env.REACT_APP_WFS_LAYER_URL + "departamentos")
-            .then((response)=>setDepartamentos(response.data)) //Una vez encontrado los datos, en formato GeoJSON
+            .get(process.env.REACT_APP_WFS_GEO_URL + "sgg_grupo08:departamentos")
+            .then((response)=>{
+                const valoresATomar = props.crimen ? [props.crimen]: [
+                    "EXTORSION","HURTO_VEH_MERCADERIA","LESIONES","ROBO_VEH"
+                ]
+                const deptosOrignial = {...response.data}
+                const nuevosFeatures = response.data.features.map(feature=>{
+                    var sumatoria = 0
+                    valoresATomar.map((valorIndex)=>{
+                        if(feature.properties[valorIndex])
+                            sumatoria += parseInt(feature.properties[valorIndex])
+                    })
+                    feature.properties.SUMATORIA_CRIMENES = sumatoria
+                    return feature
+                })
+                deptosOrignial.features = nuevosFeatures
+                setDepartamentos(deptosOrignial)
+
+                const sumas = 
+                    deptosOrignial.features
+                    .map(feature => feature.properties.cat)
+                    .filter(onlyUnique)
+                    .map((featureID)=>{
+                        return deptosOrignial.features
+                            .filter(feature => feature.properties.cat === featureID)[0]
+                            .properties.SUMATORIA_CRIMENES
+                    })
+
+                var brewDeptos = new classyBrew();
+                brewDeptos.setSeries(sumas)
+                brewDeptos.setNumClasses(6)
+                brewDeptos.setColorCode('PuBu')
+                brewDeptos.classify('quantile');
+                setBrew(brewDeptos)
+            }) //Una vez encontrado los datos, en formato GeoJSON
             //Lo mandamos a nuestro state.
         
     },[])
@@ -21,7 +56,7 @@ export default function(){
     return(
         <FeatureGroup>
         {
-          departamentos ? //Si los departamenos no están vacios, es decir, no es nulo, sigamos.
+          departamentos && brew ? //Si los departamenos no están vacios, es decir, no es nulo, sigamos.
           departamentos
             .features.map(feature => feature.properties.cat) //Primeramente, nos dirigiremos a "features" que es la variable o
                                                             // array donde se encuentran los poligonos y sus datos
@@ -40,10 +75,10 @@ export default function(){
                 
                 //Traemos la informacion del departamento, en este caso podemos usar el primer elemento.
                 var departamento = featuresDepto[0]         
-                
+                var estilo = getStyle(brew.getColorInRange(departamento.properties.SUMATORIA_CRIMENES))
                 return ( //Devolvemos el resultado de nuestro componente, es decir, el poligono y el Popup
                 <FeatureGroup>
-                    <GeoJSON key={index} id={index} data={featuresDepto} style={estiloHomicidios} 
+                    <GeoJSON key={index} id={index} data={featuresDepto} style={estilo} 
                         eventHandlers={{
                             click: () => {
                                 console.log("Departamento clic: ",departamento.properties.NOMBRE)
@@ -52,7 +87,7 @@ export default function(){
                     />
                     <Popup>
                         <strong>Departamento:</strong> {departamento.properties.NOMBRE}<br /> 
-                        <strong>Homicidios:</strong> {departamento.properties.HOMICIDIOS}
+                        <strong>{props.title? props.title:"Crimenes"}:</strong> {departamento.properties.SUMATORIA_CRIMENES}
                     </Popup>
                 </FeatureGroup>
                 )
