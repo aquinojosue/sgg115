@@ -9,7 +9,7 @@ import "./styles.css";
 import axios from "axios";
 import { Container, Row } from "react-bootstrap";
 import MunicipioLayer from "./components/layers/MunicipioLayer";
-import { map } from "leaflet";
+import MapScale from "./components/MapScale";
 const { BaseLayer, Overlay } = LayersControl;
 
 export default function App() {
@@ -18,37 +18,62 @@ export default function App() {
     default: true,
     coords: {latitude: 28.365724898272077, longitude: -81.55254364013672}
   })
+  const [collapsed,setCollapsed] = useState(true);
+  const [selected,setSelected] = useState("home");
+
+  function onOpen(id){
+    setCollapsed(false);
+    setSelected(id)
+  }
+
+  function onClose(){
+    setCollapsed(true)
+  }
   const [route, setRoute] = useState(null);
   var layers_departamento = [
     {
+      "title":"Sumatoria de crimenes",
+      "numClasses":4
+    },
+    {
       "crimen": "EXTORSION",
-      "title": "Extorsiones"
+      "title": "Extorsiones",
+      "numClasses":4
     },
     {
       "crimen": "HURTO_VEH_MERCADERIA",
-      "title": "Hurtos de vehículos con mercadería"
+      "title": "Hurtos de vehículos con mercadería",
+      "numClasses":4
     },
     {
       "crimen": "LESIONES",
-      "title": "Lesiones"
+      "title": "Lesiones",
+      "numClasses":5
     },
     {
       "crimen": "ROBO_VEH",
-      "title": "Robos de vehículos"
+      "title": "Robos de vehículos",
+      "numClasses":4
     }
   ]
   var layers_municipios = [
+    {
+      "title": "Sumatoria de crimenes",
+      "numClasses":5
+    },
     {
       "crimen": "HOMICIDIO",
       "title": "Homicidios"
     },
     {
       "crimen": "FALLECIDOS_ACC_TTO",
+      "colorRange":"RdYlGn",
       "title": "Fallecidos en Accidentes de tránsito"
     },
     {
       "crimen": "HURTO",
-      "title": "Hurtos"
+      "title": "Hurtos",
+      "numClasses":4
     },
     {
       "crimen": "SECUESTRO",
@@ -90,21 +115,20 @@ export default function App() {
         setRoute({"name":name,"geojson":ruta, "destineCoords":destino})
       })
   }
-  useEffect(()=>{
-    if(route && route.geojson){
-      //routeRef.current.clearLayers()
-    }
-  },[route])
+
   return (
-    <>
-      <Header />
-      <Container>
-        <Row style={{"margin-top":"50px"}}>
+    <div >
+      <Header style={{"z-index":99}}/>
+        <Container>
+          <Row style={{"margin-top":"10px"}}>
           <MapContainer
             center={[13.705953500345197, -89.21219012823919]}
+            className="markercluster-map"
+
             zoom={9}
           >
-            <LayersControl>
+            <MapScale key="mapScale"/>
+            <LayersControl position="bottomleft">
               {/* Definicion de las capas base, osea nuestras capas raster */}
               <BaseLayer  name="OpenStreetMap">
                 <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
@@ -115,13 +139,12 @@ export default function App() {
               <BaseLayer name="Vista satelital (ESRI)">
                 <TileLayer url="http://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" />
               </BaseLayer>
-              <LayerGroup>
                 {/* Definicion de nuestras capas de poligonos, las que sacamos de GeoServer */}
                 
                 <Overlay name="Gimnasios">
                   <GimnasiosLayer setRoute={setRouteORS}/>
                 </Overlay>
-                <Overlay name="Natacion">
+                <Overlay name="Clubes de Natacion">
                   <NatacionLayer setRoute={setRouteORS}/>
                 </Overlay>
                 
@@ -140,21 +163,13 @@ export default function App() {
                 {
                   
                 }
-                <Overlay name="Sumatoria de crimenes por Departamento">
-                  <DepartamentoLayer />
-                </Overlay>
                 {
                   layers_departamento.map(layer=>(
                     <Overlay name={layer.title + ` (por departamento)`} >
                       <DepartamentoLayer {...layer} />
                     </Overlay>
                   ))
-                }
-
-                <Overlay name="Homicidios por Municipio">
-                  <MunicipioLayer title="Homicidios" crimen="HOMICIDIO" colorRange="YlOrRd"/>
-                </Overlay>
-                
+                }                
                 {
                   layers_municipios.map(layer=>(
                     <Overlay name={layer.title + ` (por municipio)`} >
@@ -162,14 +177,9 @@ export default function App() {
                     </Overlay>
                   ))
                 }
-                <Overlay name="Sumatoria de crimenes por Municipio">
-                  <MunicipioLayer/>
-                </Overlay>
-              </LayerGroup>
             </LayersControl>
-          </MapContainer>
-        </Row>
-      </Container>
-    </>
+          </MapContainer></Row>
+        </Container>
+    </div>
   );
 }

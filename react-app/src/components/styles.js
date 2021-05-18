@@ -4,7 +4,7 @@ function getStyle(fillColor){
         weight: 2,
         opacity: 1,
         color: 'white',
-        fillOpacity: 0.5
+        fillOpacity: 0.75
     };
 
 }

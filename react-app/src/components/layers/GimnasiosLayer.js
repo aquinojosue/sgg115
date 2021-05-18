@@ -31,8 +31,6 @@ export default function GimnasiosLayer(props){
             gimnasios.features.map((gimnasio, index)=>{
                 var id_gimnasio = "gimnasio_"+index
                 return(
-                <FeatureGroup>
-                    {/**<GeoJSON id={id_gimnasio} key={id_gimnasio} data={gimnasio}/> */}
                     <Marker 
                         id={id_gimnasio}
                         key={id_gimnasio}
@@ -43,12 +41,14 @@ export default function GimnasiosLayer(props){
                                 props.setRoute(gimnasio.geometry.coordinates,gimnasio.properties.nombre_gym)
                             },
                           }}
-                    />
-                    <Popup>
-                        <b>{gimnasio.properties.nombre_gym}</b><br/>
-                        <b>Teléfono:</b> {gimnasio.properties.telefono_gym}<br/>
-                    </Popup>
-                </FeatureGroup>
+                    >
+
+                    {/**<GeoJSON id={id_gimnasio} key={id_gimnasio} data={gimnasio}/> */}
+                        <Popup>
+                            <b>{gimnasio.properties.nombre_gym}</b><br/>
+                            <b>Teléfono:</b> {gimnasio.properties.telefono_gym}<br/>
+                        </Popup>
+                    </Marker>
                 )
             })
             :""
